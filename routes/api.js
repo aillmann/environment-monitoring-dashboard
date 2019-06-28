@@ -13,7 +13,6 @@ var testApiUrl = 'http://dev008.segmentation.ga251.api.dev.td.com:8080/coverage-
 
 // CONFIG DATA
 var config = require('../data/config.js');
-var master = require('../data/master.js');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -556,6 +555,7 @@ router.get('/tests/:env/:product', function(req, res, next) {
 				});
 				break;
 
+			/*
 			case 'db':
 				var password = master.databasePasswords(product, env);
 
@@ -622,7 +622,7 @@ router.get('/tests/:env/:product', function(req, res, next) {
 				}
 				test();
 				break;
-				 
+			*/
 
 			default:
 				data.details = 'Health check not defined'
