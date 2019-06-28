@@ -16,11 +16,9 @@ router.get('/', function(req, res, next) {
 	res.send(JSON.stringify({
 		'methods': [
 			'/api/envs',
-			'/api/dus',
-			'/api/dus/:du?env',
-			'/api/products',
-			'/api/tokens',
-			'/api/tests/:env/:product'
+			'/api/servers',
+			'/api/apps/:app',
+			'/api/tests/:env/:app'
 		]
 	}));
 });
@@ -95,8 +93,8 @@ router.get('/servers', function (req, res, next) {
 	
 // });
 
-function genProductUrl (product, env, test, timeout) {
-	var url = '/products/' + product + '?env=' + env;
+function genAppUrl (app, env, test, timeout) {
+	var url = '/apps/' + app + '?env=' + env;
 	if (test) {
 		url += '&test=true';
 	}
@@ -106,29 +104,32 @@ function genProductUrl (product, env, test, timeout) {
 	return url;
 }
 
-router.get('/products', function (req, res, next) {
+router.get('/apps', function (req, res, next) {
 	res.set('Content-Type', 'application/json');
-	var du = req.query.du;
-	var env = req.query.env;
-	var products = config.products2(env);
-
-	var test = req.query.test;
-	var timeout = req.query.timeout;
 	
-	if ( du ) {
-		if ( !config.dus[du] ) {
+	var server = req.query.server;
+	var env = req.query.env;
+	var test = req.query.test; // boolean
+	var timeout = req.query.timeout; // integer
+
+	var apps = Object.keys(config.apps);
+	
+	if ( server ) {
+		if ( !config.servers[server] ) {
 			res.status(404);
-			res.send('ERROR: ?du=' + du + ' is not defined');
+			res.send('ERROR: ?server=' + server + ' is not defined');
 		} else {
-			products = config.productsByDu(du);
+			apps = config.appsByServer(server);
 		}
 	}
 
 	if ( env ) {
-		if ( !config.envs.includes(env) ) {
+		if ( !config.envs[env] ) {
 			res.status(404);
 			res.send('ERROR: ?env=' + env + ' is not defined');
 		} else {
+
+			apps = config.appsByEnv(env);
 
 			var count = 0;
 			var details = {};
@@ -138,30 +139,29 @@ router.get('/products', function (req, res, next) {
 			tests.failed = [];
 			tests.timeout = [];
 
-			var getProductDetails = new Promise( function(resolve, reject) {
+			var getAppDetails = new Promise( function(resolve, reject) {
 				
-				products.forEach( function(product) {
+				apps.forEach( function(app) {
 					instance({
-						// url: ( (req.query.test == 'true') ? '/products/' + product + '?env=' + env + '&test=true' : '/products/' + product + '?env=' + env )
-						url: genProductUrl(product, env, test, timeout)
+						url: genAppUrl(app, env, test, timeout)
 					}).then( function(response) {
 						
 						if ( test ) {
 							if ( response.data.test.statusCode == 2 ) {
-								tests.passed.push(product);
+								tests.passed.push(app);
 							} else if ( response.data.test.statusCode == 10 ) {
-								tests.timeout.push(product);
+								tests.timeout.push(app);
 							} else {
-								tests.failed.push(product);
+								tests.failed.push(app);
 							}
 						}
 
-						details[product] = response.data;
+						details[app] = response.data;
 						count ++;
-						if (count >= products.length) resolve();
+						if (count >= apps.length) resolve();
 					}).catch( function(error) {
 						count ++;
-						if (count >= products.length) resolve();
+						if (count >= apps.length) resolve();
 					});
 				});
 
@@ -171,7 +171,7 @@ router.get('/products', function (req, res, next) {
 				if (test) {
 					results =  {
 						'total': total,
-						'summaryStatus': (tests.passed.length >= products.length) ? 'green' : 'red',
+						'summaryStatus': (tests.passed.length >= apps.length) ? 'green' : 'red',
 						'passed': {
 							'count': tests.passed.length,
 							'list': tests.passed
@@ -189,21 +189,21 @@ router.get('/products', function (req, res, next) {
 				}
 
 				res.send(JSON.stringify({
-					'du': du,
+					'server': server,
 					'test': results,
-					'products': {
-						'list': products,
-						'count': products.length
+					'apps': {
+						'list': apps,
+						'count': apps.length
 					},
 					'details': details	
 				}));
 			}).catch( function(error) {
 				console.log(error);
 				res.send(JSON.stringify({
-					'du': du,
-					'products': {
-						'list': products,
-						'count': products.length
+					'server': server,
+					'apps': {
+						'list': apps,
+						'count': apps.length
 					}
 				}));
 			})
@@ -211,18 +211,28 @@ router.get('/products', function (req, res, next) {
 		}
 	} else {
 		res.send(JSON.stringify({
-			'du': du,
-			'products': {
-				'list': products,
-				'count': products.length
+			'server': server,
+			'apps': {
+				'list': apps,
+				'count': apps.length
 			}
 		}));
 	}
 
 });
 
-router.get('/products/:product', function (req, res, next) {
-	var product = req.params.product;
+router.get('/apps/:app', function (req, res, next) {
+	/*
+		inputs:
+			uri params:
+				app - string
+			query params:
+				envs - string
+				test - boolean
+				timeout - integer
+	*/
+
+	var app = req.params.app;
 	var env = req.query.env;
 	var test = req.query.test;
 	var timeout = 7500;
@@ -231,27 +241,26 @@ router.get('/products/:product', function (req, res, next) {
 		timeout = Number(req.query.timeout);
 	}
 
-	if ( !config.products[product] ) {
+	if ( !config.apps[app] ) {
 		res.status(404);
-		res.send('ERROR: ' + product + ' is not defined');
+		res.send('ERROR: ' + app + ' is not defined');
 	} else {
-		
 		var url, hostname;
-		var du = config.products[product].du;
+		var server = config.apps[app].server;
 		if ( env ) {
-			if ( !config.envs.includes(env) ) {
+			if ( !config.envs[env] ) {
 				res.status(404);
 				res.send('ERROR: ' + env + ' is not defined');
 			} else {
-				url = config.baseUrl(env, product);
-				hostname = config.hostname(env, du);
+				url = config.baseUrl(env, app);
+				hostname = config.hostname(env, server);
 
 				if ( test == 'true' ) {
 
 					var getTest = new Promise( function(resolve, reject) {
 						var data = {};
 						instance({
-							url: '/tests/' + env + '/' + product
+							url: '/tests/' + env + '/' + app
 						}).then( function(response) {
 							getTest = response.data;
 							resolve(getTest);
@@ -275,9 +284,9 @@ router.get('/products/:product', function (req, res, next) {
 					}).then( function(getTest) {
 						res.set('Content-Type', 'application/json');
 						res.send(JSON.stringify({
-							'name': (config.products[product].name) ? config.products[product].name : product,
-							'type': config.productType(product), 
-							'du': du,
+							'name': (config.apps[app].name) ? config.apps[app].name : app,
+							'type': config.serverType(app), 
+							'server': server,
 							'hostname': hostname,
 							'url': url,
 							'test': getTest
@@ -291,9 +300,9 @@ router.get('/products/:product', function (req, res, next) {
 				} else {
 					res.set('Content-Type', 'application/json');
 					res.send(JSON.stringify({
-						'name': (config.products[product].name) ? config.products[product].name : product,
-						'type': config.productType(product), 
-						'du': du, 
+						'name': (config.apps[app].name) ? config.apps[app].name : app,
+						'type': config.serverType(app), 
+						'server': server, 
 						'hostname': hostname,
 						'url': url
 					}));
@@ -302,9 +311,9 @@ router.get('/products/:product', function (req, res, next) {
 		} else {
 			res.set('Content-Type', 'application/json');
 			res.send(JSON.stringify({
-				'name': (config.products[product].name) ? config.products[product].name : product,
-				'type': config.productType(product),
-				'du': du, 
+				'name': (config.apps[app].name) ? config.apps[app].name : app,
+				'type': config.serverType(app), 
+				'server': server, 
 				'hostname': hostname,
 				'url': url
 			}));
@@ -352,9 +361,37 @@ router.get('/tests/:env/:app', function(req, res, next) {
 					res.set('Content-Type', 'application/json');
 					res.send(data);
 				});
-
 				break;
 
+			case 'website':
+				instance({
+					url: data.baseUrl
+				}).then( function(response) {
+					if (response.status == 200) {
+						data.statusCode = 2;
+						data.statusLabel = config.statusLabel[data.statusCode];
+					} else {
+						data.statusCode = 0;
+						data.statusLabel = config.statusLabel[data.statusCode];
+					}
+					data.details = {
+						'status': response.status
+					}
+					res.set('Content-Type', 'application/json');
+					res.send(data);
+				}).catch( function(error) {
+					data.statusCode = 0;
+					data.statusLabel = config.statusLabel[data.statusCode];
+					data.details = {
+						'status': error.response.status,
+						'message': error.response.data
+					}
+					res.set('Content-Type', 'application/json');
+					res.send(data);
+				});
+				break;
+
+			/* Sample Code for setting other tests */
 			// case 'api-java':
 			// 	instance({
 			// 		method: 'get',

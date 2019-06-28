@@ -2,7 +2,7 @@ var config = {
 	envs: {
         'sample': {
             'envPrefix': '',
-            'apps': ['thisApp']
+            'apps': ['thisApp', 'google']
         }, 
         'dev': {
             'envPrefix': ''
@@ -19,6 +19,11 @@ var config = {
 			'name': 'The Environment Dashboard',
 			'server': 'thisServer',
 			'pathTemplate': ''
+		},
+		'google': {
+			'name': 'Google',
+			'server': 'google',
+			'pathTemplate': ''
 		}
 		
 	},
@@ -26,6 +31,10 @@ var config = {
 		'thisServer': {
 			'urlTemplate': 'localhost',
 			'type': 'node-app'
+		},
+		'google': {
+			'urlTemplate': 'google.ca',
+			'type': 'website'
 		}
 
 	},
@@ -46,7 +55,9 @@ var config = {
 			case 'node-app':
 				out = 'http://' + envPrefix + this.servers[server].urlTemplate + ':3080' + this.apps[app].pathTemplate;
 				break;
-
+			case 'website':
+				out = 'http://' + envPrefix + this.servers[server].urlTemplate + this.apps[app].pathTemplate;
+				break;
 			default:
 				out = null;
 		}
