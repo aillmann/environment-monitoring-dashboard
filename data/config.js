@@ -1,15 +1,24 @@
 var config = {
 	envs: {
-        'local': {
+        'sample': {
             'envPrefix': '',
             'apps': ['thisApp']
+        }, 
+        'dev': {
+            'envPrefix': ''
+        }, 
+        'sit': {
+            'envPrefix': ''
+        }, 
+        'uat': {
+            'envPrefix': ''
         }
 	},
 	apps: {
 		'thisApp': {
 			'name': 'The Environment Dashboard',
 			'server': 'thisServer',
-			'pathTemplate': '/'
+			'pathTemplate': ''
 		}
 		
 	},
@@ -135,13 +144,13 @@ function testServerType() {
 
 function testBaseUrl() {
 	var input = {
-		'env': 'local',
+		'env': 'sample',
 		'app': 'thisApp'
 	};
 
 	console.log('\n--- Testing baseUrl() ---');
 	
-	expected = 'http://localhost:3080/';
+	expected = 'http://localhost:3080';
 	test = config.baseUrl(input.env, input.app);
 
 	console.log('Expected Result: ' + expected);
@@ -157,7 +166,7 @@ function testBaseUrl() {
 
 function testHostname() {
 	var input = {
-		'env': 'local',
+		'env': 'sample',
 		'server': 'thisServer'
 	};
 
@@ -221,7 +230,7 @@ function testAppsByServer() {
 
 function testAppsByEnv() {
 	var input = {
-		'env': 'local',
+		'env': 'sample',
 	};
 
 	console.log('\n--- Testing appsByEnv() ---');

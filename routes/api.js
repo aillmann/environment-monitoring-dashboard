@@ -312,156 +312,185 @@ router.get('/products/:product', function (req, res, next) {
 	}
 });
 
-router.get('/tests/:env/:product', function(req, res, next) {
+router.get('/tests/:env/:app', function(req, res, next) {
 	var env = req.params.env;
-	var product = req.params.product;
+	var app = req.params.app;
 
-	if( !config.products[product] || !config.envs.includes(env) ) {
+	if( !config.apps[app] || !config.envs[env] ) {
 		res.status(404);
 		res.send('ERROR: Not found');
 	} else {
 		var data = {
-			'baseUrl': config.baseUrl(env, product),
+			'baseUrl': config.baseUrl(env, app),
 			'statusCode': 0
 		};
 
-		switch ( config.productType(product) ) {
-			case 'api-java':
+		switch ( config.serverType(app) ) {
+			case 'node-app':
 				instance({
-					method: 'get',
-					url: '/tokens'
-				}).then(function (response){
-					var token = response.data.token_type + ' ' + response.data.access_token;
-					instance({
-						url: data.baseUrl + '/health-check',
-						headers: {
-							'Authorization': token
-						}
-					}).then( function(response) {
-						if (response.status == 200) {
-							data.statusCode = 2;
-							data.statusLabel = config.statusLabel[data.statusCode];
-							data.version = response.data.version;
-						} else {
-							data.statusCode = 0;
-							data.statusLabel = config.statusLabel[data.statusCode];
-						}
-						data.details = {
-							'status': response.status,
-							'message': response.data
-						}
-
-						res.set('Content-Type', 'application/json');
-						res.send(data);
-					}).catch( function(error) {
+					url: data.baseUrl
+				}).then( function(response) {
+					if (response.status == 200) {
+						data.statusCode = 2;
+						data.statusLabel = config.statusLabel[data.statusCode];
+					} else {
 						data.statusCode = 0;
 						data.statusLabel = config.statusLabel[data.statusCode];
-						data.details = {
-							'status': error.response.status,
-							'message': error.response.data
-						}
-
-						res.set('Content-Type', 'application/json');
-						res.send(data);
-					});
-
-				}).catch(function (error) {
-					//console.log(error);
-					res.status(500);
-					res.send('Error: Unexpected error');
-				});
-				break;
-
-			case 'gw':
-				instance({
-					url: data.baseUrl + '/ping',
-				}).then(function (response){
-					var status = 0;
-					switch (response.data) {
-						case 1:
-							status = 1;
-							break;
-						case 2:
-							status = 2;
-							break;
 					}
-
-					data.statusCode = status;
-					data.statusLabel = config.statusLabel[status];
-					data.details = response.data;
-
-					// if the server is up, get the version
-					if (status == 2) {
-						instance({
-							url: '/tests/gwVersion/' + env + '/' + product
-						}).then( function(response) {
-							data.version = response.data.version;
-
-							res.set('Content-Type', 'application/json');
-							res.send(data);
-						}).catch( function(error) {
-							res.set('Content-Type', 'application/json');
-							res.send(data);
-						});
-					} else {
-						res.set('Content-Type', 'application/json');
-						res.send(data);
+					data.details = {
+						'status': response.status
 					}
-
-				}).catch(function (error){
+					res.set('Content-Type', 'application/json');
+					res.send(data);
+				}).catch( function(error) {
 					data.statusCode = 0;
-					data.statusLabel = config.statusLabel[0];
-					data.details = error.response.data;
-
+					data.statusLabel = config.statusLabel[data.statusCode];
+					data.details = {
+						'status': error.response.status,
+						'message': error.response.data
+					}
 					res.set('Content-Type', 'application/json');
 					res.send(data);
 				});
+
 				break;
 
-			case 'api-node':
-				instance({
-					url: '/tokens'
-				}).then(function (response){
-					var token = response.data.token_type + ' ' + response.data.access_token;
-					instance({
-						url: data.baseUrl + '/api/info',
-						headers: {
-							'Authorization': token
-						}
-					}).then( function(response) {
-						if (response.status == 200) {
-							data.statusCode = 2;
-							data.statusLabel = config.statusLabel[data.statusCode];
-							data.version = response.data.project.nodejs.projectVersion;
-						} else {
-							data.statusCode = 0;
-							data.statusLabel = config.statusLabel[data.statusCode];
-						}
-						data.details = {
-							'status': response.status,
-							'message': response.data
-						}
+			// case 'api-java':
+			// 	instance({
+			// 		method: 'get',
+			// 		url: '/tokens'
+			// 	}).then(function (response){
+			// 		var token = response.data.token_type + ' ' + response.data.access_token;
+			// 		instance({
+			// 			url: data.baseUrl + '/health-check',
+			// 			headers: {
+			// 				'Authorization': token
+			// 			}
+			// 		}).then( function(response) {
+			// 			if (response.status == 200) {
+			// 				data.statusCode = 2;
+			// 				data.statusLabel = config.statusLabel[data.statusCode];
+			// 				data.version = response.data.version;
+			// 			} else {
+			// 				data.statusCode = 0;
+			// 				data.statusLabel = config.statusLabel[data.statusCode];
+			// 			}
+			// 			data.details = {
+			// 				'status': response.status,
+			// 				'message': response.data
+			// 			}
 
-						res.set('Content-Type', 'application/json');
-						res.send(data);
-					}).catch( function (error) {
-						data.statusCode = 0;
-						data.statusLabel = config.statusLabel[data.statusCode];
-						data.details = {
-							'status': error.response.status,
-							'message': error.response.data
-						}
+			// 			res.set('Content-Type', 'application/json');
+			// 			res.send(data);
+			// 		}).catch( function(error) {
+			// 			data.statusCode = 0;
+			// 			data.statusLabel = config.statusLabel[data.statusCode];
+			// 			data.details = {
+			// 				'status': error.response.status,
+			// 				'message': error.response.data
+			// 			}
 
-						res.set('Content-Type', 'application/json');
-						res.send(data);
-					});
+			// 			res.set('Content-Type', 'application/json');
+			// 			res.send(data);
+			// 		});
 
-				}).catch(function (error) {
-					//console.log(error);
-					res.status(500);
-					res.send('Error: Unexpected error');
-				});
-				break;
+			// 	}).catch(function (error) {
+			// 		//console.log(error);
+			// 		res.status(500);
+			// 		res.send('Error: Unexpected error');
+			// 	});
+			// 	break;
+
+			// case 'gw':
+			// 	instance({
+			// 		url: data.baseUrl + '/ping',
+			// 	}).then(function (response){
+			// 		var status = 0;
+			// 		switch (response.data) {
+			// 			case 1:
+			// 				status = 1;
+			// 				break;
+			// 			case 2:
+			// 				status = 2;
+			// 				break;
+			// 		}
+
+			// 		data.statusCode = status;
+			// 		data.statusLabel = config.statusLabel[status];
+			// 		data.details = response.data;
+
+			// 		// if the server is up, get the version
+			// 		if (status == 2) {
+			// 			instance({
+			// 				url: '/tests/gwVersion/' + env + '/' + product
+			// 			}).then( function(response) {
+			// 				data.version = response.data.version;
+
+			// 				res.set('Content-Type', 'application/json');
+			// 				res.send(data);
+			// 			}).catch( function(error) {
+			// 				res.set('Content-Type', 'application/json');
+			// 				res.send(data);
+			// 			});
+			// 		} else {
+			// 			res.set('Content-Type', 'application/json');
+			// 			res.send(data);
+			// 		}
+
+			// 	}).catch(function (error){
+			// 		data.statusCode = 0;
+			// 		data.statusLabel = config.statusLabel[0];
+			// 		data.details = error.response.data;
+
+			// 		res.set('Content-Type', 'application/json');
+			// 		res.send(data);
+			// 	});
+			// 	break;
+
+			// case 'api-node':
+			// 	instance({
+			// 		url: '/tokens'
+			// 	}).then(function (response){
+			// 		var token = response.data.token_type + ' ' + response.data.access_token;
+			// 		instance({
+			// 			url: data.baseUrl + '/api/info',
+			// 			headers: {
+			// 				'Authorization': token
+			// 			}
+			// 		}).then( function(response) {
+			// 			if (response.status == 200) {
+			// 				data.statusCode = 2;
+			// 				data.statusLabel = config.statusLabel[data.statusCode];
+			// 				data.version = response.data.project.nodejs.projectVersion;
+			// 			} else {
+			// 				data.statusCode = 0;
+			// 				data.statusLabel = config.statusLabel[data.statusCode];
+			// 			}
+			// 			data.details = {
+			// 				'status': response.status,
+			// 				'message': response.data
+			// 			}
+
+			// 			res.set('Content-Type', 'application/json');
+			// 			res.send(data);
+			// 		}).catch( function (error) {
+			// 			data.statusCode = 0;
+			// 			data.statusLabel = config.statusLabel[data.statusCode];
+			// 			data.details = {
+			// 				'status': error.response.status,
+			// 				'message': error.response.data
+			// 			}
+
+			// 			res.set('Content-Type', 'application/json');
+			// 			res.send(data);
+			// 		});
+
+			// 	}).catch(function (error) {
+			// 		//console.log(error);
+			// 		res.status(500);
+			// 		res.send('Error: Unexpected error');
+			// 	});
+			// 	break;
 
 			default:
 				data.details = 'Health check not defined'
@@ -473,64 +502,64 @@ router.get('/tests/:env/:product', function(req, res, next) {
 	}
 });
 
-function parseGwVersionResponse(response) {
-	var str = String(response);
+// function parseGwVersionResponse(response) {
+// 	var str = String(response);
 
-	if ( str.search('2.1') ) {
-		str = str.substr( str.search('2.1'), 8 );
-		str = str.trim();
-		if ( str.indexOf('*') > 0 ) {
-			str = str.substr( 0, str.indexOf('*') );
-		}
-		return str;
-	} else if ( str.search('2.2') ) {
-		str = str.substr( str.search('2.2'), 8 );
-		str = str.trim();
-		if ( str.indexOf('*') > 0 ) {
-			str = str.substr( 0, str.indexOf('*') );
-		}
-		return str;
-	} else {
-		return null;
-	}
+// 	if ( str.search('2.1') ) {
+// 		str = str.substr( str.search('2.1'), 8 );
+// 		str = str.trim();
+// 		if ( str.indexOf('*') > 0 ) {
+// 			str = str.substr( 0, str.indexOf('*') );
+// 		}
+// 		return str;
+// 	} else if ( str.search('2.2') ) {
+// 		str = str.substr( str.search('2.2'), 8 );
+// 		str = str.trim();
+// 		if ( str.indexOf('*') > 0 ) {
+// 			str = str.substr( 0, str.indexOf('*') );
+// 		}
+// 		return str;
+// 	} else {
+// 		return null;
+// 	}
 
-}
+// }
 
-router.get('/tests/gwVersion/:env/:app', function (req, res, next) {
-	var env = req.params.env;
-	var app = req.params.app;
+// router.get('/tests/gwVersion/:env/:app', function (req, res, next) {
+// 	var env = req.params.env;
+// 	var app = req.params.app;
 
-	if( !config.envs.includes(env) ) {
-		res.status(404);
-		res.send('ERROR: env=' + env + ' is not defined');
-	} else if ( !config.apps[app] || config.appType(app) != 'gw' ) {
-		res.status(404);
-		res.send('ERROR: app=' + app + ' is not defined');
-	} else {
-		var url = config.baseUrl(env, app);
+// 	if( !config.envs.includes(env) ) {
+// 		res.status(404);
+// 		res.send('ERROR: env=' + env + ' is not defined');
+// 	} else if ( !config.apps[app] || config.appType(app) != 'gw' ) {
+// 		res.status(404);
+// 		res.send('ERROR: app=' + app + ' is not defined');
+// 	} else {
+// 		var url = config.baseUrl(env, app);
 
-		switch( app ) {
-			case 'policy-center':
-				url += '/PolicyCenter.do?inFrame=about';
-				break;
-			case 'billing-center':
-				url += '/BillingCenter.do?inFrame=about';
-				break;
-			case 'contact-manager':
-				url += '/ContactManager.do?inFrame=about';
-				break;
-		}
+// 		switch( app ) {
+// 			case 'policy-center':
+// 				url += '/PolicyCenter.do?inFrame=about';
+// 				break;
+// 			case 'billing-center':
+// 				url += '/BillingCenter.do?inFrame=about';
+// 				break;
+// 			case 'contact-manager':
+// 				url += '/ContactManager.do?inFrame=about';
+// 				break;
+// 		}
 
-		axios.get(url).then(function (response) {
-			res.set('Content-Type', 'application/json');
-			res.send(JSON.stringify({
-				'version': parseGwVersionResponse(response.data)
-			}));
-		}).catch(function (error) {
-			res.status(500);
-			res.send('ERROR: Something went wrong')
-		})
-	}
-});
+// 		axios.get(url).then(function (response) {
+// 			res.set('Content-Type', 'application/json');
+// 			res.send(JSON.stringify({
+// 				'version': parseGwVersionResponse(response.data)
+// 			}));
+// 		}).catch(function (error) {
+// 			res.status(500);
+// 			res.send('ERROR: Something went wrong')
+// 		})
+// 	}
+// });
 
 module.exports = router;
