@@ -1,0 +1,34 @@
+doctype html
+html
+	head
+		title= title
+		link(rel='stylesheet', type='text/css', href='/stylesheets/style.css')
+		link(rel='stylesheet', type='text/css', href='/stylesheets/bootstrap/bootstrap.min.css')
+	
+		script(type='text/javascript', src='/javascripts/jquery-3.3.1.min.js')
+		script(type='text/javascript', src='/javascripts/popper.min.js')
+		script(type='text/javascript', src='/javascripts/bootstrap/bootstrap.min.js')
+		script(type='text/javascript', src='/javascripts/layout.js')
+		block head
+	body
+	#my-top-banner.alert-info GPS R2 Environment Monitoring Dashboard: Beta Release
+	
+	nav#my-navbar.navbar.navbar-expand-lg.navbar-dark
+		a(class='navbar-brand' href='/') Index
+		button.navbar-toggler(type='button', data-toggle='collapse', data-target='#navbarSupportedContent', aria-controls='navbarSupportedContent', aria-expanded='false', aria-label='Toggle navigation')
+			span.navbar-toggler-icon
+		#navbarSupportedContent.collapse.navbar-collapse
+			ul.navbar-nav.mr-auto
+				li.nav-item.dropdown
+					a#navbarDropdown.nav-link.dropdown-toggle(href='#', role='button', data-toggle='dropdown', aria-haspopup='true', aria-expanded='false') Environments
+					div#navbar-env-dropdown.dropdown-menu(aria-labelledby='navbarDropdown')
+				li.nav-item
+					a.nav-link(href='') Refresh
+		.form-check
+			input#rand-refresh-checkbox.form-check-input(type='checkbox', value='')
+			label.form-check-label(for='rand-refresh-checkbox') Random Refresh
+	
+	.container-fluid
+		block content
+
+	.bottom-buffer

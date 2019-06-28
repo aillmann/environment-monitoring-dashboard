@@ -1,0 +1,59 @@
+extends layout
+
+block head
+	script(type='text/javascript', src='/javascripts/environmentDashboard.js')
+
+block content
+
+	script.
+		var env = '#{title}'
+	//- h4 #{title} Overall Status: 
+	//- 	#overall-status
+	//- 	#red-products(hidden)
+	//- 		h6 Failed Health Checks
+	//- 			ul#red-products-list.list-group
+	
+	h4 #{title} Summary Report:
+	table.table
+		thead
+			tr
+				th(scope='col') Overall Status
+				th(scope='col')#overall-status
+		tbody
+			tr
+				th(scope='row') Total Products
+				td#total-products 0
+			tr
+				th(scope='row') Total Passed
+				td#total-passed 0
+			tr
+				th(scope='row') Total Failed
+				td#total-failed 0
+			tr
+				th(scope='row') Total Timeout
+				td#total-timeout 0
+
+	#red-products(hidden)
+		h6 Failed Health Checks
+			ul#red-products-list.list-group
+
+	h4 Products in #{title}:
+	//- ul.list-group
+	//- 	each product in products.list
+	//- 		li.list-group-item.product-list(id=product)= product
+
+	table.table
+		thead
+			th(scope='col') Product
+			th(scope='col') Status
+			th(scope='col') Details
+			th(scope='col') Version
+			th(scope='col') Server
+		tbody
+		each product in products.list
+			tr( id=(product+'-row') )
+				th.product-list(scope='row')= product
+				td( id=(product+'-status-cell') )
+				td( id=(product+'-details-cell') )
+				td( id=(product+'-version-cell') )
+				td( id=(product+'-link-cell') )

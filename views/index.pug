@@ -1,0 +1,10 @@
+extends layout
+
+block head
+	script(type='text/javascript', src='/javascripts/index.js')
+
+block content
+	h2 Environment Index
+	ul.list-group
+		each env in envs.list
+			a.list-group-item.list-group-item-action(href='/environmentDashboard/'+env)= env
