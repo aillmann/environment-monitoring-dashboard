@@ -8,12 +8,12 @@ const api = axios.create({baseURL: 'http://localhost:3080/api'});
 router.get('/:env', function(req, res, next) {
 	api({
 		method: 'get',
-		url: '/products?env=' + req.params.env
+		url: '/apps?env=' + req.params.env
 	}).then( function(response) {
 			
 		res.render('environmentDashboard', { 
 			title: req.params.env,
-			products: response.data.products
+			apps: response.data.apps
 		});
 
 	}).catch( function(error) {

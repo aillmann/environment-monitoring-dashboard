@@ -5,13 +5,16 @@ var config = {
             'apps': ['thisApp', 'google']
         }, 
         'dev': {
-            'envPrefix': ''
+            'envPrefix': 'dev.',
+            'apps': ['example-app']
         }, 
         'sit': {
-            'envPrefix': ''
+            'envPrefix': 'sit.',
+            'apps': ['example-app']
         }, 
         'uat': {
-            'envPrefix': ''
+            'envPrefix': 'uat.',
+            'apps': ['example-app']
         }
 	},
 	apps: {
@@ -24,6 +27,12 @@ var config = {
 			'name': 'Google',
 			'server': 'google',
 			'pathTemplate': ''
+		}, 
+
+		'example-app': {
+			'name': 'Example Application',
+			'server': 'example-server',
+			'pathTemplate': '/example-app'
 		}
 		
 	},
@@ -34,6 +43,11 @@ var config = {
 		},
 		'google': {
 			'urlTemplate': 'google.ca',
+			'type': 'website'
+		},
+
+		'example-server': {
+			'urlTemplate': 'example-server.com',
 			'type': 'website'
 		}
 

@@ -7,11 +7,6 @@ block content
 
 	script.
 		var env = '#{title}'
-	//- h4 #{title} Overall Status: 
-	//- 	#overall-status
-	//- 	#red-products(hidden)
-	//- 		h6 Failed Health Checks
-	//- 			ul#red-products-list.list-group
 	
 	h4 #{title} Summary Report:
 	table.table
@@ -21,7 +16,7 @@ block content
 				th(scope='col')#overall-status
 		tbody
 			tr
-				th(scope='row') Total Products
+				th(scope='row') Total Applications
 				td#total-products 0
 			tr
 				th(scope='row') Total Passed
@@ -37,23 +32,20 @@ block content
 		h6 Failed Health Checks
 			ul#red-products-list.list-group
 
-	h4 Products in #{title}:
-	//- ul.list-group
-	//- 	each product in products.list
-	//- 		li.list-group-item.product-list(id=product)= product
+	h4 Applications in #{title}:
 
 	table.table
 		thead
-			th(scope='col') Product
+			th(scope='col') Application
 			th(scope='col') Status
 			th(scope='col') Details
-			th(scope='col') Version
+			//th(scope='col') Version
 			th(scope='col') Server
 		tbody
-		each product in products.list
-			tr( id=(product+'-row') )
-				th.product-list(scope='row')= product
-				td( id=(product+'-status-cell') )
-				td( id=(product+'-details-cell') )
-				td( id=(product+'-version-cell') )
-				td( id=(product+'-link-cell') )
+		each app in apps.list
+			tr( id=(app+'-row') )
+				th.product-list(scope='row')= app
+				td( id=(app+'-status-cell') )
+				td( id=(app+'-details-cell') )
+				//td( id=(app+'-version-cell') )
+				td( id=(app+'-link-cell') )

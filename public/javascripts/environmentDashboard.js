@@ -32,9 +32,9 @@ $(document).ready( function() {
 	});
 
 	$.ajax({
-		url: '/api/products?env=' + env,
+		url: '/api/apps?env=' + env,
 		success: function(data, textStatus, jqXHR) {
-			totalProducts = data.products.count;
+			totalProducts = data.apps.count;
 			$('#total-products').html(totalProducts);
 		}
 	});
@@ -48,14 +48,16 @@ $(document).ready( function() {
 	$( ".product-list" ).each(function() {
 
 		var product = $( this ).text()
+		console.log(product);
 
 		$.ajax({
-			url: '/api/products/' + product + '?env=' + env + '&test=true', 
+			url: '/api/apps/' + product + '?env=' + env + '&test=true', 
 			success: function(data, textStatus, jqXHR) {
 				// $('#'+product+'-status-cell').append('  --  status: ' + data.statusLabel + ', version: ' + data.version);
 				var ver;
 				(data.test.version) ? (ver = data.test.version) : (ver = 'unavailable')
-				$('#'+product+'-details-cell').append('<a href="/products/' + product +'?env=' + env + '">Results</a>');
+				console.log(product);
+				$('#'+product+'-details-cell').append('<a href="/apps/' + product +'?env=' + env + '">Results</a>');
 				$('#'+product+'-version-cell').html(ver);
 				$('#'+product+'-link-cell').html(data.hostname);
 
