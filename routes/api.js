@@ -1,15 +1,11 @@
+// DEPENDENCIES
 var express = require('express');
 var router = express.Router();
 
 const axios = require('axios');
-const instance = axios.create({baseURL: 'http://localhost:3080/api'});
-
-var oracledb = require('oracledb');
-
-var pingFedScope = 'gps.fin.cc.w gps.fin.cc.r api.mgmt.info.r gps.fin.fnevts.w gps.fin.cal.r gps.fin.dis.r gps.oir.csr.r gps.oir.csr.w gps.cif.prts.r gps.cif.prts.w gps.oir.atrp.r gps.oir.atrp.w gps.ap.acc.r gps.ra.affgrps.r gps.dm.dmagg.w gps.ra.cap.w gps.dm.corr.w gps.ra.ias.w gps.ra.iasl.w gps.oir.mvrr.r gps.oir.mvrr.w gps.fin.pde.w gps.ap.pol.r gps.ra.pxmd.w gps.ra.ragr.w gps.uae.cov.r gps.uae.cov.w gps.uae.eli.w gps.uae.eli.r gps.uae.lft.w gps.uae.lft.r gps.uae.wap.w gps.uae.wap.r gps.ap.licv.r gps.ra.oda.w gps.ap.prtf.r gps.ap.mtv.r gps.uae.cov.w gps.uae.cov.r gps.uae.eli.w gps.uae.eli.r gps.uae.lft.w gps.uae.lft.r gps.uae.wap.w gps.uae.wap.r gps.ubi.drv.r gps.ubi.drv.w gps.extr.bvsr.r gps.uae.dcln.w gps.uae.dcln.r gps.dis.bnkacc.r gps.dis.bnkacc.w gps.fin.blnginfo.r gps.dis.chqrec.disb.r gps.dis.chqrec.disb.w gps.claim.mnracc.r gps.uae.mvrnw.r gps.uae.mvrnw.w gsp.ga521gs.gsp.r rst.ga521rc.rst.r loc.ga521gar.loc.r cb.ga521.acr.r gps.uae.cusegmt.w gps.uae.cusegmt.r gps.uae.clqualif.w gps.uae.clqualif.r gps.uae.lgloss.w gps.uae.lgloss.r gps.uae.oiltank.w gps.uae.oiltank.r gps.uae.condcont.w gps.uae.condcont.r gps.uae.covres.w gps.uae.covres.r loc.ga521fp.loc.r';
-var pingFedUrl = 'https://fed1.sys.tdbank.ca/as/token.oauth2?grant_type=client_credentials&client_id=TestScopeClient&client_secret=2Federate&scope=' + pingFedScope;
-
-var testApiUrl = 'http://dev008.segmentation.ga251.api.dev.td.com:8080/coverage-offering-res/health-check';
+const instance = axios.create({
+	baseURL: 'http://localhost:3080/api'
+});
 
 // CONFIG DATA
 var config = require('../data/config.js');
@@ -34,146 +30,70 @@ router.get('/envs', function (req, res, next) {
 	res.set('Content-Type', 'application/json');
 	res.send(JSON.stringify({
 		'envs': {
-			'list': config.envs, 
-			'count': config.envs.length
+			'list': Object.keys(config.envs), 
+			'count': Object.keys(config.envs).length
 		} 
 	}));
 });
 
-/*router.get('/envs/summary', function (req, res, next) {
-	var envs = config.envs;
-	//var envs = ['dev009', 'sit006'];
-	var count = 0;
-	var timeout = req.query.timeout;
-
-	var tests = {};
-	tests.passed = [];
-	tests.failed = [];
-
-	var getSummary = new Promise( function (resolve, reject) {
-
-		var url;
-		var results = {};
-		envs.forEach( function(env) {
-
-			url = '/products?test=true' + '&env=' + env;
-			if (timeout) url += '&timeout=' + timeout;
-
-			instance({
-				url: url
-			}).then( function(response) {
-
-				console.log(response.data.test.summaryStatus);
-
-				if( response.data.test.summaryStatus == 'green' ) {
-					results[env] = {
-						'total': response.data.test.total,
-						'totalPassed': response.data.test.passed.count,
-						'summaryStatus': response.data.test.summaryStatus
-					},
-					tests.passed.push(env);
-				} else {
-					results[env] = {
-						'total': response.data.test.total,
-						'totalPassed': response.data.test.passed.count,
-						'summaryStatus': response.data.test.summaryStatus, 
-						'failed': response.data.test.failed, 
-						'timeout': response.data.test.timeout
-					},
-					tests.failed.push(env);
-				}
-
-				count ++;
-				if (count >= envs.length) resolve(results);
-			}).catch( function(error) {
-				res.send(error);
-			});
-
-		});
-
-	}).then( function (results) {
-
-		var response = {
-			'summary': {
-				'total': envs.length,
-				'green': tests.passed.length,
-				'red': {
-					'count': tests.failed.length,
-					'list': tests.failed
-				}
-			},
-			'results': results, 
-			'envs': {
-				'list': envs, 
-				'count': envs.length
-			}			
-		};
-
-		res.set('Content-Type', 'application/json');
-		res.send(JSON.stringify(response));
-
-	}).catch( function (error)  {
-		res.send(error);
-	});
-
-});*/
-
-router.get('/dus', function (req, res, next) {
+// Returns the list of servers in the configuration
+router.get('/servers', function (req, res, next) {
 	res.set('Content-Type', 'application/json');
 	res.send(JSON.stringify({
-		'dus': {
-			'list': Object.keys(config.dus),
-			'count': Object.keys(config.dus).length
+		'servers': {
+			'list': Object.keys(config.servers),
+			'count': Object.keys(config.servers).length
 		}
 	}));
 });
 
-router.get('/dus/:du', function (req, res, next) {
-	var du = req.params.du;
-	var env;
+/* Needs to be refactored to the new variable names */
+// router.get('/dus/:du', function (req, res, next) {
+// 	var du = req.params.du;
+// 	var env;
 
-	if ( !config.dus[du] ) {
-		res.status(404);
-		res.send('ERROR: ' + du + ' is not defined');
-	} else {
+// 	if ( !config.dus[du] ) {
+// 		res.status(404);
+// 		res.send('ERROR: ' + du + ' is not defined');
+// 	} else {
 
-		var products = config.productsByDu(du);
-		var hostname;
-		var productsEndpoint = '/products?du=' + du;
+// 		var products = config.productsByDu(du);
+// 		var hostname;
+// 		var productsEndpoint = '/products?du=' + du;
 
-		if ( req.query.env ) {
-			env = req.query.env;
-			if ( !config.envs.includes(env) ) {
-				res.status(404);
-				res.send('ERROR: ' + env + ' is not defined');
-			} else {
-				hostname = config.hostname(env, du);
-				productsEndpoint += '&env=' + env; 
-			}
-		} 
+// 		if ( req.query.env ) {
+// 			env = req.query.env;
+// 			if ( !config.envs.includes(env) ) {
+// 				res.status(404);
+// 				res.send('ERROR: ' + env + ' is not defined');
+// 			} else {
+// 				hostname = config.hostname(env, du);
+// 				productsEndpoint += '&env=' + env; 
+// 			}
+// 		} 
 
-		instance({
-			url: productsEndpoint
-		}).then(function (response) {
-			res.set('Content-Type', 'application/json');
-			res.send(JSON.stringify({
-				'name': (config.dus[du].name) ? config.dus[du].name : du,
-				'type': config.dus[du].type,
-				'hostname': hostname,
-				'products': response.data.products
-			}));
-		}).catch( function(error) {
-			res.set('Content-Type', 'application/json');
-			res.send(JSON.stringify({
-				'name': (config.dus[du].name) ? config.dus[du].name : du,
-				'type': config.dus[du].type,
-				'hostname': hostname
-			}));
-		});
+// 		instance({
+// 			url: productsEndpoint
+// 		}).then(function (response) {
+// 			res.set('Content-Type', 'application/json');
+// 			res.send(JSON.stringify({
+// 				'name': (config.dus[du].name) ? config.dus[du].name : du,
+// 				'type': config.dus[du].type,
+// 				'hostname': hostname,
+// 				'products': response.data.products
+// 			}));
+// 		}).catch( function(error) {
+// 			res.set('Content-Type', 'application/json');
+// 			res.send(JSON.stringify({
+// 				'name': (config.dus[du].name) ? config.dus[du].name : du,
+// 				'type': config.dus[du].type,
+// 				'hostname': hostname
+// 			}));
+// 		});
 
-	}
+// 	}
 	
-});
+// });
 
 function genProductUrl (product, env, test, timeout) {
 	var url = '/products/' + product + '?env=' + env;
@@ -392,18 +312,6 @@ router.get('/products/:product', function (req, res, next) {
 	}
 });
 
-router.get('/tokens', function(req, res, next) {
-	instance({
-		method: 'post',
-		url: pingFedUrl
-	}).then(function (response){
-		res.send(response.data);
-	}).catch(function (error){
-		res.status(500);
-		res.send('Error: could not get token');
-	});
-});
-
 router.get('/tests/:env/:product', function(req, res, next) {
 	var env = req.params.env;
 	var product = req.params.product;
@@ -555,75 +463,6 @@ router.get('/tests/:env/:product', function(req, res, next) {
 				});
 				break;
 
-			/*
-			case 'db':
-				var password = master.databasePasswords(product, env);
-
-				async function test() {
-					let connection;
-
-					try {
-						connection = await oracledb.getConnection( {
-							user: product, 
-							password: password, 
-							connectString: data.baseUrl
-						});
-						connection.callTimeout = 5000;
-
-						let  result = await connection.execute(`SELECT COUNT(table_name) FROM user_tables`);
-
-						var numTables = result.rows[0][0];
-
-						if (numTables > 0) {
-							data.statusCode = 2;
-							data.statusLabel = config.statusLabel[data.statusCode];
-						} else {
-							data.statusCode = 0;
-							data.statusLabel = config.statusLabel[data.statusCode];
-						}
-						data.version = 'n/a';
-						data.details = {
-							'message': 'Connection Successful: ' + numTables + ' tables in ' + product
-						}
-
-						res.set('Content-Type', 'application/json');
-						res.send(data);
-					} catch (err) {
-						console.log(err);
-						data.statusCode = 0;
-						data.statusLabel = config.statusLabel[data.statusCode];
-						data.version = 'n/a';
-						data.details = {
-							'message': 'Connection Failed' 
-						}
-
-						console.log('Failed to connect to: ' + data.baseUrl);
-
-						res.set('Content-Type', 'application/json');
-						res.send(data);
-					} finally {
-						if (connection) {
-							try {
-								await connection.close();
-							} catch (err) {
-								console.log(err);
-								data.statusCode = 0;
-								data.statusLabel = config.statusLabel[data.statusCode];
-								data.version = 'n/a';
-								data.details = {
-									'message': 'Unexpected Error' 
-								}
-
-								res.set('Content-Type', 'application/json');
-								res.send(data);
-							}
-						}
-					}
-				}
-				test();
-				break;
-			*/
-
 			default:
 				data.details = 'Health check not defined'
 
@@ -657,23 +496,20 @@ function parseGwVersionResponse(response) {
 
 }
 
-// var res1 = '<html> <head> <title>About Guidewire PolicyCenter</title> <base href="http://sit011.policycenter.gpas.app.dev.td.com:8080/pc/resources/themes/Titanium/resources/"> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta http-equiv="Cache-Control" content="no-cache"> <meta http-equiv="Pragma" content="no-cache"> <meta http-equiv="Expires" content="0"> <style> .about-text { font-family: Courier New, Courier, monotype; font-size: 11px; font-weight: normal; color: #47637E; } .preview-text { font-family: Courier New, Courier, monotype; font-size: 20px; font-weight: bold; color: #47637E; } </style> </head> <body class="about-body" bgcolor="#FFFFFF" topmargin="1" leftmargin="1" marginwidth="0" marginheight="0" link="#0000FF" alink="#0000FF" vlink="#0000FF"> <form action="About.do?inFrame=about" method="POST" name="about"> <img src="images/app/about-splash.png" > <table width="100%" height="100%" cellspacing="0" cellpadding="0" style="position:absolute;top:0px;left:0px;z-index: 5"> <tr> <td width="100%" height="100%"> <!-- cover background image --> </td> </tr> </table> <div class="preview-text" style="position:absolute; left: 5px; bottom: 95px;z-index: 20"> <br> </div> <div class="about-text" style="position:absolute; left: 20px; bottom: 6px; top: 213px;z-index: 10"> Application Version: 8.0.7.437 <br> Platform Version: 8.27.0.437 <br> Schema Version: 603 <br> Server Instance: pcbatch1&nbsp;&nbsp;Config Env: prod <br> <b>Build Number:</b> </b>&nbsp;&nbsp;2.1.1425 </div> </form></body></html>';
-// console.log(parseGwVersionResponse(res1));
-
-router.get('/tests/gwVersion/:env/:product', function (req, res, next) {
+router.get('/tests/gwVersion/:env/:app', function (req, res, next) {
 	var env = req.params.env;
-	var product = req.params.product;
+	var app = req.params.app;
 
 	if( !config.envs.includes(env) ) {
 		res.status(404);
 		res.send('ERROR: env=' + env + ' is not defined');
-	} else if ( !config.products[product] || config.productType(product) != 'gw' ) {
+	} else if ( !config.apps[app] || config.appType(app) != 'gw' ) {
 		res.status(404);
-		res.send('ERROR: product=' + product + ' is not defined');
+		res.send('ERROR: app=' + app + ' is not defined');
 	} else {
-		var url = config.baseUrl(env, product);
+		var url = config.baseUrl(env, app);
 
-		switch( product ) {
+		switch( app ) {
 			case 'policy-center':
 				url += '/PolicyCenter.do?inFrame=about';
 				break;
